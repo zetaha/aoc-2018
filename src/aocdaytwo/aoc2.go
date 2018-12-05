@@ -30,6 +30,7 @@ func (fc *FlagsCounter) updateCounters(flags Flags) {
 		fc.Triple++
 	}
 }
+
 func getScanner(filename string) (*bufio.Scanner, error) {
 	file, err := os.Open(filename)
 	if err != nil {
@@ -41,24 +42,34 @@ func getScanner(filename string) (*bufio.Scanner, error) {
 	return scanner, nil
 }
 
-func processString(chars []byte) Flags {
+func getDoubleTripleFlags(chars []byte) Flags {
 	flags := Flags{false, false}
+
+	// counts the occurrence of chars
 	charmap := make(map[byte]int)
+
+	// stores the doubles
 	doubles := make(map[byte]int)
+
+	//stores the triples
 	triples := make(map[byte]int)
+
 	for _, char := range chars {
 		charmap[char]++
-		if charmap[char] == 2 {
+		value := charmap[char]
+		if value == 2 {
 			doubles[char] = 1
 		}
-		if charmap[char] == 3 {
+		if value == 3 {
 			delete(doubles, char)
 			triples[char] = 1
 		}
-		if charmap[char] > 3 {
+		if value > 3 {
 			delete(triples, char)
 		}
 	}
+
+	//
 	if len(doubles) > 0 {
 		flags.Double = true
 	}
@@ -71,14 +82,16 @@ func processString(chars []byte) Flags {
 
 func partOne(filename string) int {
 	fmt.Println("solving part one!")
+
 	scanner, err := getScanner(filename)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("error retriving the scanner", err)
 		return 0
 	}
+
 	fc := FlagsCounter{0, 0}
 	for scanner.Scan() {
-		flags := processString(scanner.Bytes())
+		flags := getDoubleTripleFlags(scanner.Bytes())
 		fc.updateCounters(flags)
 	}
 	checksum := fc.Double * fc.Triple
@@ -86,39 +99,9 @@ func partOne(filename string) int {
 	return checksum
 }
 
-func compareStrings(s1, s2 string) bool {
-	this := []byte(s1)
-	isEqual := false
-	other := []byte(s2)
-	var length int
-	if len(this) < len(other) {
-		length = len(this)
-	} else {
-		length = len(other)
-	}
-	diff := 0
-	for i := 0; i < length; i++ {
-		if this[i] != other[i] {
-			diff++
-		}
-		if diff > 1 {
-			isEqual = true
-			break
-		}
-	}
-	return isEqual
-}
-
-func assembleSequence(line string, skipindex int) string {
-	seq := ""
-	for j, char := range line {
-		if j != skipindex {
-			seq = seq + string(char)
-		}
-	}
-	return seq
-}
-
+// findEquivalentStrings finds equivalent strings in time n*k
+// n = len of keys
+// k = len of keys[i] i=0,1,..,n
 func findEquivalentStrings(keys []string, skipindex int) (Seq, error) {
 	charmap := make(map[Seq]int)
 	for k := range keys {
@@ -150,5 +133,7 @@ func partTwo(filename string) int {
 }
 
 func main() {
-	partTwo("input.txt")
+	filename := "input.txt"
+	partOne(filename)
+	partTwo(filename)
 }
